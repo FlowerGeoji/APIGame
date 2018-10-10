@@ -1,19 +1,19 @@
 //
-//  Game.swift
+//  GameView.swift
 //  APIGameIOS
 //
-//  Created by FlowerGeoji on 2018. 10. 4..
+//  Created by FlowerGeoji on 2018. 10. 5..
 //  Copyright © 2018년 FlowerGeoji. All rights reserved.
 //
 
 import Foundation
 import UIKit
 
-protocol GameRequest: class {
+public protocol GameRequest: class {
   func onRequestApi(_ method: String, _ url: String, _ data: Any?, _ completion: @escaping (Bool, [String:Any]?) -> ())
 }
 
-class Game: UIView, UITableViewDelegate, UITableViewDataSource {
+public class GameView: UIView, UITableViewDelegate, UITableViewDataSource {
   enum Module: Int {
     case OX = 0
     case CHOICE
@@ -28,15 +28,15 @@ class Game: UIView, UITableViewDelegate, UITableViewDataSource {
     case SETTING
   }
   
-  public let role: Role
+  private(set) var role: Role!
   private(set) var module: Module? {
     didSet {
       self.didSetModule()
     }
   }
-  public weak var delegate: GameRequest?
+  weak var delegate: GameRequest?
   
-  public let roomId: Int
+  public var roomId: Int!
   private(set) var gameId: Int?
   
   let gameListView: UIView = UIView()
@@ -48,13 +48,14 @@ class Game: UIView, UITableViewDelegate, UITableViewDataSource {
   }
   
   init(role: Role, roomId: Int) {
+    super.init(frame: CGRect.zero)
     self.role = role
     self.roomId = roomId
     self.initializeView()
   }
   
-  func initializeView() {
-    if self.role == Game.Role.HOST {
+  private func initializeView() {
+    if self.role == GameView.Role.HOST {
       // init view
       self.addSubview(gameListView)
       self.gameListView.translatesAutoresizingMaskIntoConstraints = false
@@ -104,6 +105,7 @@ class Game: UIView, UITableViewDelegate, UITableViewDataSource {
     }
   }
   
+  // callback func
   func requestApi(_ method: String, _ url: String, _ data: Any?, _ completion: @escaping (Bool, [String: Any]?) -> ()) {
     guard let delegate = self.delegate else {
       return
@@ -112,7 +114,7 @@ class Game: UIView, UITableViewDelegate, UITableViewDataSource {
   }
   
   // tableView
-  class GameCell: UITableViewCell {
+  private class GameCell: UITableViewCell {
     private(set) var module: Module!
     let labelTitle: UILabel = UILabel()
     let labelDescription: UILabel = UILabel()
@@ -124,28 +126,28 @@ class Game: UIView, UITableViewDelegate, UITableViewDataSource {
     }
   }
   
-  func numberOfSections(in tableView: UITableView) -> Int {
+  private func numberOfSections(in tableView: UITableView) -> Int {
     return 1
   }
   
-  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+  public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     return 5
   }
   
-  func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+  private func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
     return UITableView.automaticDimension
   }
   
-  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+  public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     guard let cell = tableView.dequeueReusableCell(withIdentifier: "GameCell") as? GameCell else {
       return UITableViewCell()
     }
     
-    cell.initialize(module: Game.Module.init(rawValue: indexPath.row)!)
+    cell.initialize(module: GameView.Module.init(rawValue: indexPath.row)!)
     return cell
   }
   
-  func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+  private func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     if let cell = tableView.cellForRow(at: indexPath) as? GameCell{
       self.selectGame(module: cell.module)
     }

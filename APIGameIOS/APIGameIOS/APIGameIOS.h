@@ -2,7 +2,7 @@
 //  APIGameIOS.h
 //  APIGameIOS
 //
-//  Created by FlowerGeoji on 2018. 10. 4..
+//  Created by FlowerGeoji on 2018. 10. 5..
 //  Copyright © 2018년 FlowerGeoji. All rights reserved.
 //
 
