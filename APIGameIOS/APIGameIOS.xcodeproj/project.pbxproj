@@ -10,6 +10,8 @@
 		9B69D0D221742262003AB6BE /* APIGameIOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B69D0C821742262003AB6BE /* APIGameIOS.framework */; };
 		9B69D0D721742262003AB6BE /* APIGameIOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B69D0D621742262003AB6BE /* APIGameIOSTests.swift */; };
 		9B69D0D921742262003AB6BE /* APIGameIOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 9B69D0CB21742262003AB6BE /* APIGameIOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9B69D0E32174239D003AB6BE /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B69D0E22174239D003AB6BE /* Game.swift */; };
+		9B69D0E42174239D003AB6BE /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B69D0E22174239D003AB6BE /* Game.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,6 +31,7 @@
 		9B69D0D121742262003AB6BE /* APIGameIOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = APIGameIOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B69D0D621742262003AB6BE /* APIGameIOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIGameIOSTests.swift; sourceTree = "<group>"; };
 		9B69D0D821742262003AB6BE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9B69D0E22174239D003AB6BE /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +76,7 @@
 			children = (
 				9B69D0CB21742262003AB6BE /* APIGameIOS.h */,
 				9B69D0CC21742262003AB6BE /* Info.plist */,
+				9B69D0E22174239D003AB6BE /* Game.swift */,
 			);
 			path = APIGameIOS;
 			sourceTree = "<group>";
@@ -148,6 +152,7 @@
 				TargetAttributes = {
 					9B69D0C721742262003AB6BE = {
 						CreatedOnToolsVersion = 10.0;
+						LastSwiftMigration = 1000;
 					};
 					9B69D0D021742262003AB6BE = {
 						CreatedOnToolsVersion = 10.0;
@@ -194,6 +199,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9B69D0E32174239D003AB6BE /* Game.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -202,6 +208,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9B69D0D721742262003AB6BE /* APIGameIOSTests.swift in Sources */,
+				9B69D0E42174239D003AB6BE /* Game.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -341,6 +348,7 @@
 		9B69D0DD21742262003AB6BE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
@@ -358,6 +366,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = flower.geoji.APIGameIOS;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -366,6 +375,7 @@
 		9B69D0DE21742262003AB6BE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
@@ -391,6 +401,7 @@
 		9B69D0E021742262003AB6BE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = YZS73SV2C8;
 				INFOPLIST_FILE = APIGameIOSTests/Info.plist;
@@ -409,6 +420,7 @@
 		9B69D0E121742262003AB6BE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = YZS73SV2C8;
 				INFOPLIST_FILE = APIGameIOSTests/Info.plist;
