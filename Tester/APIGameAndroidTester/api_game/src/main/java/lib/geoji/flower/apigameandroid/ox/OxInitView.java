@@ -1,22 +1,20 @@
 package lib.geoji.flower.apigameandroid.ox;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import lib.geoji.flower.apigameandroid.Game;
-import lib.geoji.flower.apigameandroid.GameView;
 import lib.geoji.flower.apigameandroid.R;
 
-public class OxInitView extends GameView implements android.view.View.OnClickListener {
-    enum Scene {
-        INIT, MAIN
-    }
-
+public class OxInitView extends LinearLayout implements android.view.View.OnClickListener {
     /* constructor */
     public OxInitView(Context context, Game game) {
-        super(context, game);
+        super(context);
         this.initialize(game);
     }
 

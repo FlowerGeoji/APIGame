@@ -13,14 +13,22 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.gson.JsonObject;
+
 import java.util.ArrayList;
 
+import io.reactivex.Single;
 import lib.geoji.flower.apigameandroid.model.GameModule;
+import lib.geoji.flower.apigameandroid.model.Round;
+import lib.geoji.flower.apigameandroid.ox.OxInitView;
 
 public class Game extends RelativeLayout {
-    private GamePresenter presenter;
     private View gameListView;
-    private GameView currentView = null;
+    private ViewGroup currentView = null;
+
+    private int roomId;
+    private ArrayList<Round> rounds;
+    private int currentRoundIndex;
 
     public Game(@NonNull Context context) {
         super(context);
@@ -54,7 +62,9 @@ public class Game extends RelativeLayout {
             addView(this.gameListView);
 
             /* init presenter */
-            this.presenter = new GamePresenter(this);
+            this.rounds = new ArrayList<>();
+            this.rounds.add(new Round(Round.Type.OX, 10, "", "", new String[]{"0", "1"}, "0"));
+            this.currentRoundIndex = 0;
         }
         catch (NullPointerException e) {
             e.printStackTrace();
@@ -62,26 +72,51 @@ public class Game extends RelativeLayout {
 
     }
 
-    public void initialize(int roomId) {
-        this.presenter.setRoomId(roomId);
+    public void initRoom(int roomId) {
+        this.roomId = roomId;
     }
 
-    public GamePresenter getPresenter() {
-        return presenter;
-    }
-
-    public void changeView(GameView gameView) {
+    void changeView(@NonNull ViewGroup view) {
         if (currentView != null) {
             this.removeView(currentView);
         }
 
-        if (gameView == null) {
-            this.gameListView.setVisibility(VISIBLE);
+        this.gameListView.setVisibility(GONE);
+        this.addView(view);
+        this.currentView = view;
+    }
+
+    private void onClickGameModule(GameModule gameModule) {
+        switch (gameModule.getType()) {
+            case OX:
+
+                this.changeView(new OxInitView(this.getContext(), this));
+                break;
+            case CHOICE:
+                break;
+            case SURVIVAL:
+                break;
         }
-        else {
-            this.gameListView.setVisibility(GONE);
-            this.addView(gameView);
-            this.currentView = gameView;
+    }
+
+    /* Request api */
+    public interface OnRequestApiListener {
+        Single<JsonObject> requestApi(@io.reactivex.annotations.NonNull String url, @io.reactivex.annotations.NonNull String method);
+    }
+    private OnRequestApiListener onRequestApiListener;
+    public void setOnRequestApiListener(OnRequestApiListener onRequestApiListener) {
+        this.onRequestApiListener = onRequestApiListener;
+    }
+    public Single<JsonObject> requestApi(@io.reactivex.annotations.NonNull String url, @io.reactivex.annotations.NonNull String method) {
+        if (this.onRequestApiListener != null) {
+            return Single.error(new Throwable(""));
+        }
+        try {
+            return this.onRequestApiListener.requestApi(url, method);
+        }
+        catch (NullPointerException e){
+            e.printStackTrace();
+            return Single.error(e);
         }
     }
 
@@ -104,11 +139,8 @@ public class Game extends RelativeLayout {
                 final GameModule game = this.games.get(position);
                 holder.bind(game);
 
-                holder.getView().setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Game.this.presenter.onClickGameModule(game);
-                    }
+                holder.getView().setOnClickListener(view -> {
+                    Game.this.onClickGameModule(game);
                 });
             }
             catch(IndexOutOfBoundsException e) {
@@ -122,7 +154,7 @@ public class Game extends RelativeLayout {
             return this.games.size();
         }
 
-        public void addItem(GameModule game) {
+        void addItem(GameModule game) {
             this.games.add(game);
             this.notifyItemInserted(this.games.size()-1);
         }
@@ -142,7 +174,7 @@ public class Game extends RelativeLayout {
                 this.descriptionTextView = itemView.findViewById(R.id.gameDescriptionTextView);
             }
 
-            public void bind(GameModule gameModule) {
+            void bind(GameModule gameModule) {
                 this.gameModule = gameModule;
 //                Picasso.get()
 //                        .load(game.getThumbnail())

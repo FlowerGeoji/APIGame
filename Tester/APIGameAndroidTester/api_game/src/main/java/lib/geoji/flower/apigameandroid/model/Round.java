@@ -1,7 +1,7 @@
 package lib.geoji.flower.apigameandroid.model;
 
 public class Round {
-    enum Type {
+    public enum Type {
         OX, CHOICE, SUBJECTIVE
     }
 
