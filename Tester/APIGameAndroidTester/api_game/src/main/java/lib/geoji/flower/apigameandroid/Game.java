@@ -2,6 +2,7 @@ package lib.geoji.flower.apigameandroid;
 
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
@@ -10,44 +11,49 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.gson.JsonObject;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 import lib.geoji.flower.apigameandroid.model.GameModule;
 import lib.geoji.flower.apigameandroid.model.Round;
+import lib.geoji.flower.apigameandroid.model.User;
 import lib.geoji.flower.apigameandroid.ox.OxInitView;
 
-public class Game extends RelativeLayout {
+public class Game extends LinearLayout {
     private View gameListView;
-    private ViewGroup currentView = null;
-
-    private int roomId;
-    private ArrayList<Round> rounds;
-    private int currentRoundIndex;
+    private GameView currentView = null;
+    private GameState state;
+    private Subject<GameState> stateSubject = PublishSubject.create();
+    Disposable stateDisposable;
 
     public Game(@NonNull Context context) {
         super(context);
-        this.init(context);
+        this.initView(context);
     }
 
     public Game(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        this.init(context);
+        this.initView(context);
     }
 
     public Game(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        this.init(context);
+        this.initView(context);
     }
 
-    private void init(Context context) {
+    private void initView(Context context) {
         try {
-            /* init view */
+            this.setBackgroundColor(Color.RED);
+            /* initView view */
             LayoutInflater layoutInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             gameListView = layoutInflater.inflate(R.layout.game_view, this, false);
 
@@ -55,48 +61,70 @@ public class Game extends RelativeLayout {
             RecyclerView gameListView = this.gameListView.findViewById(R.id.gameRecyclerView);
             GameListAdapter gameListAdapter = new GameListAdapter();
             gameListView.setAdapter(gameListAdapter);
-            gameListAdapter.addItem(new GameModule(GameModule.Type.OX, "OX", "OX description", "", 0));
-            gameListAdapter.addItem(new GameModule(GameModule.Type.CHOICE, "Choice", "Choice description", "", 0));
-            gameListAdapter.addItem(new GameModule(GameModule.Type.SURVIVAL, "Survival", "Survival description", "", 0));
+            gameListAdapter.addItem(new GameModule(GameModule.Type.OX, OxInitView.class, "OX", "OX description", "", 0));
+            gameListAdapter.addItem(new GameModule(GameModule.Type.CHOICE, OxInitView.class, "Choice", "Choice description", "", 0));
+            gameListAdapter.addItem(new GameModule(GameModule.Type.SURVIVAL, OxInitView.class, "Survival", "Survival description", "", 0));
 
             addView(this.gameListView);
 
-            /* init presenter */
-            this.rounds = new ArrayList<>();
-            this.rounds.add(new Round(Round.Type.OX, 10, "", "", new String[]{"0", "1"}, "0"));
-            this.currentRoundIndex = 0;
+            this.stateDisposable = stateSubject.subscribe(
+                    nextState -> {
+                        this.state = nextState;
+                        if (this.currentView != null) {
+                            this.currentView.onChangedGameState(this.state);
+                        }
+                    },
+                    error -> {
+
+                    }
+            );
+            this.stateSubject.onNext(new GameState());
         }
         catch (NullPointerException e) {
             e.printStackTrace();
         }
-
     }
 
-    public void initRoom(int roomId) {
-        this.roomId = roomId;
+
+
+    public void init(int roomId, User user) {
+//        this.roomId = roomId;
+//        this.user = user;
     }
 
-    void changeView(@NonNull ViewGroup view) {
-        if (currentView != null) {
-            this.removeView(currentView);
+    public void changeView(Class<? extends GameView> viewClass) {
+        try {
+            GameView newView = viewClass.getConstructor(Context.class).newInstance(this.getContext());
+            newView.initialize(this);
+
+            if (currentView != null) {
+                this.removeView(currentView);
+            }
+
+            this.gameListView.setVisibility(GONE);
+            this.addView(newView);
+            this.currentView = newView;
         }
+        catch (InstantiationException e) {
+            e.printStackTrace();
+        }
+        catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
 
-        this.gameListView.setVisibility(GONE);
-        this.addView(view);
-        this.currentView = view;
+    public void addRound(Round round) {
+
     }
 
     private void onClickGameModule(GameModule gameModule) {
-        switch (gameModule.getType()) {
-            case OX:
-
-                this.changeView(new OxInitView(this.getContext(), this));
-                break;
-            case CHOICE:
-                break;
-            case SURVIVAL:
-                break;
-        }
+        this.changeView(gameModule.getViewClass());
     }
 
     /* Request api */

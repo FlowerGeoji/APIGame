@@ -6,20 +6,29 @@ public class Round {
     }
 
     private Type type;
-    private int answerTimeLimit;
 
     private String question;
     private String imageUrl;
     private String[] choices;
     private String solution;
+    private int answerTimeLimit;
 
-    public Round(Type type, int answerTimeLimit, String question, String imageUrl, String[] choices, String solution) {
+    public Round() { }
+
+    public Round(Type type, String question, String imageUrl, String[] choices, String solution, int answerTimeLimit) {
         this.type = type;
-        this.answerTimeLimit = answerTimeLimit;
         this.question = question;
         this.imageUrl = imageUrl;
         this.choices = choices;
         this.solution = solution;
+        this.answerTimeLimit = answerTimeLimit;
+    }
+
+    public void initOX(String question, String imageUrl, String solution, int answerTimeLimit) {
+        this.question = question;
+        this.imageUrl = imageUrl;
+        this.solution = solution;
+        this.answerTimeLimit = answerTimeLimit;
     }
 
     public Type getType() {

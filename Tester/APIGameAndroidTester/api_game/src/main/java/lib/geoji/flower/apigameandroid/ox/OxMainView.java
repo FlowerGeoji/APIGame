@@ -8,20 +8,22 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import lib.geoji.flower.apigameandroid.Game;
+import lib.geoji.flower.apigameandroid.GameState;
+import lib.geoji.flower.apigameandroid.GameView;
 import lib.geoji.flower.apigameandroid.R;
 
-public class OxMainView extends LinearLayout implements View.OnClickListener {
+public class OxMainView extends GameView implements View.OnClickListener {
     private OxMainPresenter presenter;
     TextView questionTextView;
     Button oButton;
     Button xButton;
 
-    public OxMainView(Context context, Game game) {
+    public OxMainView(Context context) {
         super(context);
-        this.initialize(game);
     }
 
-    private void initialize(Game game) {
+    @Override
+    protected void initialize(Game game) {
         // init view
         LayoutInflater layoutInflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = layoutInflater.inflate(R.layout.ox_main, this, false);
@@ -32,6 +34,11 @@ public class OxMainView extends LinearLayout implements View.OnClickListener {
         this.oButton.setOnClickListener(this);
         this.xButton = view.findViewById(R.id.button_choice_false);
         this.xButton.setOnClickListener(this);
+    }
+
+    @Override
+    protected void onChangedGameState(GameState gameState) {
+
     }
 
     @Override
