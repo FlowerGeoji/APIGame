@@ -3,20 +3,20 @@ package lib.geoji.flower.apigameandroid.model;
 import lib.geoji.flower.apigameandroid.GameView;
 
 public class GameModule {
-    public static enum Type {
+    public static enum GameType {
         OX, CHOICE, SURVIVAL
     }
 
-    private Type type;
-    Class<? extends GameView> viewClass;
+    private GameType gameType;
+    private Class<? extends GameView> viewClass;
 
     private String displayName;
     private String description;
     private String thumbnail;
     private int requiredLevel;
 
-    public GameModule(Type type, Class<? extends GameView> viewClass, String displayName, String description, String thumbnail, int requiredLevel) {
-        this.type = type;
+    public GameModule(GameType gameType, Class<? extends GameView> viewClass, String displayName, String description, String thumbnail, int requiredLevel) {
+        this.gameType = gameType;
         this.viewClass = viewClass;
         this.displayName = displayName;
         this.description = description;
@@ -24,8 +24,8 @@ public class GameModule {
         this.requiredLevel = requiredLevel;
     }
 
-    public Type getType() {
-        return type;
+    public GameType getGameType() {
+        return gameType;
     }
 
     public Class<? extends GameView> getViewClass() {

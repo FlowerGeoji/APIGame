@@ -2,7 +2,6 @@ package lib.geoji.flower.apigameandroid.model;
 
 public class User {
     private int id;
-    private String fuid;
     private String name;
     private int level;
     private String profileImage;
@@ -16,9 +15,8 @@ public class User {
     private int heart;
     private int heartGauge;
 
-    public User(int id, String fuid, String name, int level, String profileImage, String description, int jam, int cream, int choux, int won, int heart, int heartGauge) {
+    public User(int id, String name, int level, String profileImage, String description, int jam, int cream, int choux, int won, int heart, int heartGauge) {
         this.id = id;
-        this.fuid = fuid;
         this.name = name;
         this.level = level;
         this.profileImage = profileImage;
@@ -33,10 +31,6 @@ public class User {
 
     public int getId() {
         return id;
-    }
-
-    public String getFuid() {
-        return fuid;
     }
 
     public String getName() {

@@ -9,5 +9,10 @@
     <string name="cancel">취소</string>
     <string name="open_counts">집계 공개</string>
     <string name="input_question">Q. 문제를 입력하세요</string>
+    <string name="init_question_count">(0/20)</string>
     <string name="next">다음</string>
+
+    <!--OX-->
+    <string name="O">O</string>
+    <string name="X">X</string>
 </resources>

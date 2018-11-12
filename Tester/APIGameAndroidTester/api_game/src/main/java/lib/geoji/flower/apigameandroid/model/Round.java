@@ -1,17 +1,19 @@
 package lib.geoji.flower.apigameandroid.model;
 
+import com.google.gson.annotations.Expose;
+
 public class Round {
     public enum Type {
         OX, CHOICE, SUBJECTIVE
     }
 
-    private Type type;
+    @Expose private Type type;
 
-    private String question;
-    private String imageUrl;
-    private String[] choices;
-    private String solution;
-    private int answerTimeLimit;
+    @Expose private String question;
+    @Expose private String imageUrl;
+    @Expose private String[] choices;
+    @Expose private String solution;
+    @Expose private int answerTimeLimit;
 
     public Round() { }
 
@@ -25,6 +27,7 @@ public class Round {
     }
 
     public void initOX(String question, String imageUrl, String solution, int answerTimeLimit) {
+        this.type = Type.OX;
         this.question = question;
         this.imageUrl = imageUrl;
         this.solution = solution;
