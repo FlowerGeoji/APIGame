@@ -31,7 +31,7 @@ public class OxMainController extends GameView {
     protected void initialize(Game game) {
         this.game = game;
         game.setCurrentRound(0);
-        this.round = game.stateSubject.getValue().getCurrentRound();
+        this.round = game.getState().getCurrentRound();
 
         // init view
         LayoutInflater layoutInflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);

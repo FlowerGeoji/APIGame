@@ -8,7 +8,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +28,6 @@ import java.util.Map;
 import io.reactivex.CompletableObserver;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.subjects.BehaviorSubject;
 import lib.geoji.flower.apigameandroid.model.GameModule;
 import lib.geoji.flower.apigameandroid.model.Round;
 import lib.geoji.flower.apigameandroid.model.User;
@@ -39,7 +37,7 @@ public class Game extends LinearLayout {
     private View gameListView;
     private Map<GameModule.GameType, GameModule> gameList = new HashMap<>();
     private GameView currentView = null;
-    final public BehaviorSubject<GameState> stateSubject = BehaviorSubject.<GameState>create();
+    private GameState state = new GameState();
     Disposable stateDisposable;
 
     public Game(@NonNull Context context) {
@@ -64,7 +62,7 @@ public class Game extends LinearLayout {
             gameList.put(GameModule.GameType.SURVIVAL, new GameModule(GameModule.GameType.SURVIVAL, OxInitController.class, "Survival", "Survival description", "", 0));
             this.setBackgroundColor(Color.RED);
 
-            this.stateDisposable = stateSubject.subscribe(
+            this.stateDisposable = this.state.stateSubject.subscribe(
                     nextState -> {
                         if (this.currentView != null) {
                             this.currentView.onChangedGameState(nextState);
@@ -75,7 +73,6 @@ public class Game extends LinearLayout {
                     },
                     Throwable::printStackTrace
             );
-            this.stateSubject.onNext(new GameState());
         }
         catch (NullPointerException e) {
             e.printStackTrace();
@@ -100,13 +97,9 @@ public class Game extends LinearLayout {
         }
 
         /* initialize state */
-        GameState state = this.stateSubject.getValue();
-
-        state.setRoomId(roomId);
-        state.setUser(user);
-        state.setRole(role);
-
-        stateSubject.onNext(state);
+        state.setRoomId(roomId)
+                .setUser(user)
+                .setRole(role);
     }
 
     private void onClickGameModule(GameModule gameModule) {
@@ -122,10 +115,9 @@ public class Game extends LinearLayout {
 
                 Game.this.changeView(gameModule.getViewClass());
 
-                GameState state = Game.this.stateSubject.getValue();
-                state.setGameId(gameId);
-                state.setGameType(gameModule.getGameType());
-                Game.this.stateSubject.onNext(state);
+                state.setGameId(gameId)
+                        .setGameType(gameModule.getGameType())
+                        .next();
             }
 
             @Override
@@ -138,6 +130,10 @@ public class Game extends LinearLayout {
     /**************************************************************************************************************************************************
      * State handler
      **************************************************************************************************************************************************/
+    public GameState getState() {
+        return this.state;
+    }
+
     public interface OnStateChangedListener {
         void stateChanged(String state);
     }
@@ -147,12 +143,11 @@ public class Game extends LinearLayout {
     }
 
     public void onRemoteMessage(String message) {
-        if (stateSubject.getValue().getRole() != GameState.Role.GUEST) {
+        if (state.getRole() != GameState.Role.GUEST) {
             return;
         }
 
         try {
-            GameState state = stateSubject.getValue();
             GameState hostState = new Gson().fromJson(message, GameState.class);
 
             // Check game type
@@ -167,8 +162,11 @@ public class Game extends LinearLayout {
                 }
             }
 
-            state.merge(hostState);
-            stateSubject.onNext(state);
+            state.setGameId(hostState.getGameId())
+                    .setGameType(hostState.getGameType())
+                    .setCurrentRoundIndex(hostState.getCurrentRoundIndex())
+                    .setCurrentRound(hostState.getCurrentRound())
+                    .next();
         }
         catch (JsonParseException e) {
             e.printStackTrace();
@@ -213,14 +211,11 @@ public class Game extends LinearLayout {
     }
 
     public void addRound(Round round) {
-        GameState state = this.stateSubject.getValue();
         state.getRounds().add(round);
-        this.stateSubject.onNext(state);
+        state.next();
     }
 
     public void setCurrentRound(int index) {
-        GameState state = this.stateSubject.getValue();
-
         Round currentRound = null;
         try {
             currentRound = state.getRounds().get(index);
@@ -231,9 +226,9 @@ public class Game extends LinearLayout {
 
 
         if (currentRound != null) {
-            state.setCurrentRoundIndex(index);
-            state.setCurrentRound(currentRound);
-            stateSubject.onNext(state);
+            state.setCurrentRoundIndex(index)
+                    .setCurrentRound(currentRound)
+                    .next();
         }
     }
 
@@ -249,8 +244,6 @@ public class Game extends LinearLayout {
     }
 
     private Throwable checkHostApi(boolean checkRoomId, boolean checkGameId) {
-        GameState state = stateSubject.getValue();
-
         if (state.getRole() != GameState.Role.HOST) {
             return new Throwable("You must be a HOST");
         }
@@ -274,7 +267,7 @@ public class Game extends LinearLayout {
         String method = "get";
         String url = "/user/info";
         JsonObject data = new JsonObject();
-        data.addProperty("user_id", stateSubject.getValue().getUser().getId());
+        data.addProperty("user_id", state.getUser().getId());
 
         this.onRequestApiListener.requestApi(method, url, data, new SingleObserver<JsonObject>() {
             @Override
@@ -284,8 +277,6 @@ public class Game extends LinearLayout {
             public void onSuccess(JsonObject jsonObject) {
                 try {
                     JsonObject resultUser = jsonObject.get("user").getAsJsonObject();
-
-                    GameState state = stateSubject.getValue();
 
                     state.setUser(new User(
                             resultUser.get("user_id").getAsInt(),
@@ -299,9 +290,7 @@ public class Game extends LinearLayout {
                             resultUser.get("won_amount").getAsInt(),
                             resultUser.get("heart_amount").getAsInt(),
                             resultUser.get("heart_gauge_amount").getAsInt()
-                    ));
-
-                    stateSubject.onNext(state);
+                    )).next();
 
                     observer.onComplete();
                 }
@@ -324,8 +313,6 @@ public class Game extends LinearLayout {
             return;
         }
 
-        GameState state = stateSubject.getValue();
-
         String method = "post";
         String url = String.format(Locale.ROOT, "/game/%d", state.getRoomId());
         JsonObject data = new JsonObject();
@@ -345,8 +332,6 @@ public class Game extends LinearLayout {
             }
             return;
         }
-
-        GameState state = stateSubject.getValue();
 
         String method = "post";
         String url = String.format(Locale.ROOT, "/game/%d/%s/reward", state.getRoomId(), state.getGameId());
@@ -375,8 +360,6 @@ public class Game extends LinearLayout {
                 return;
             }
 
-            GameState state = stateSubject.getValue();
-
             String method = "put";
             String url = String.format(Locale.ROOT, "/game/%d/%s/solutions", state.getRoomId(), state.getGameId());
             JsonObject data = new JsonObject();
@@ -401,8 +384,6 @@ public class Game extends LinearLayout {
             }
             return;
         }
-
-        GameState state = stateSubject.getValue();
 
         String method = "post";
         String url = String.format(Locale.ROOT, "/game/%d/%s/answers", state.getRoomId(), state.getGameId());

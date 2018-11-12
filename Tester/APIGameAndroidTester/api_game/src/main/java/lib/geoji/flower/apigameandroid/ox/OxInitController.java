@@ -28,6 +28,10 @@ public class OxInitController extends GameView {
     protected void initialize(Game game) {
         this.game = game;
 
+        if (game.getState().getRole() != GameState.Role.HOST) {
+            return;
+        }
+
         LayoutInflater layoutInflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         if (layoutInflater != null) {
             this.binding = OxInitBinding.inflate(layoutInflater, this, true);

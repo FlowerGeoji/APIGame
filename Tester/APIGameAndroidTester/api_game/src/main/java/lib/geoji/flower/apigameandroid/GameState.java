@@ -74,44 +74,48 @@ public class GameState {
         return currentRound;
     }
 
-    public void setRoomId(int roomId) {
+    public GameState setRoomId(int roomId) {
         this.roomId = roomId;
+        return this;
     }
 
-    public void setGameType(GameModule.GameType gameType) {
+    public GameState setGameType(GameModule.GameType gameType) {
         this.gameType = gameType;
+        return this;
     }
 
-    public void setGameId(String gameId) {
+    public GameState setGameId(String gameId) {
         this.gameId = gameId;
+        return this;
     }
 
-    public void setUser(User user) {
+    public GameState setUser(User user) {
         this.user = user;
+        return this;
     }
 
-    public void setRole(Role role) {
+    public GameState setRole(Role role) {
         this.role = role;
+        return this;
     }
 
-    public void setRounds(ArrayList<Round> rounds) {
+    public GameState setRounds(ArrayList<Round> rounds) {
         this.rounds = rounds;
+        return this;
     }
 
-    public void setCurrentRoundIndex(int currentRoundIndex) {
+    public GameState setCurrentRoundIndex(int currentRoundIndex) {
         this.currentRoundIndex = currentRoundIndex;
+        return this;
     }
 
-    public void setCurrentRound(Round currentRound) {
+    public GameState setCurrentRound(Round currentRound) {
         this.currentRound = currentRound;
+        return this;
     }
 
-    public void merge(GameState hostState) {
-        this.roomId = hostState.roomId;
-        this.gameType = hostState.gameType;
-        this.gameId = hostState.gameId;
-        this.currentRoundIndex = hostState.currentRoundIndex;
-        this.currentRound = hostState.currentRound;
+    public void next() {
+        stateSubject.onNext(this);
     }
 
     public String toJsonString() {
