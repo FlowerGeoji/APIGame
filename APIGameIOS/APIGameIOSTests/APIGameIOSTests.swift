@@ -2,7 +2,7 @@
 //  APIGameIOSTests.swift
 //  APIGameIOSTests
 //
-//  Created by FlowerGeoji on 2018. 10. 5..
+//  Created by FlowerGeoji on 2018. 10. 15..
 //  Copyright © 2018년 FlowerGeoji. All rights reserved.
 //
 

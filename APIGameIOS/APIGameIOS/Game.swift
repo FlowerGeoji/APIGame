@@ -1,61 +1,53 @@
 //
-//  GameView.swift
+//  Game.swift
 //  APIGameIOS
 //
-//  Created by FlowerGeoji on 2018. 10. 5..
+//  Created by FlowerGeoji on 2018. 10. 15..
 //  Copyright © 2018년 FlowerGeoji. All rights reserved.
 //
 
 import Foundation
-import UIKit
-
 public protocol GameRequest: class {
-  func onRequestApi(_ method: String, _ url: String, _ data: Any?, _ completion: @escaping (Bool, [String:Any]?) -> ())
+  func onRequestApi(_ method: String, _ url: String, _ data: Any?, _ completion: @escaping (Bool, [String: Any]?)->())
 }
 
-public class GameView: UIView, UITableViewDelegate, UITableViewDataSource {
-  enum Module: Int {
-    case OX = 0
+public class Game: UIView, UITableViewDelegate, UITableViewDataSource {
+  public enum Module: Int {
+    case OX=0
     case CHOICE
     case SUBJECTIVE
     case SURVIVAL
-    case JAM
   }
   
-  enum Role {
+  public enum Role {
     case HOST
     case GUEST
     case SETTING
   }
   
+  private let gameListView: UIView = UIView()
+  private let gameListTableView: UITableView = UITableView()
+  
+  private(set) var roomId: Int!
+  private(set) var gameId: String?
+  
   private(set) var role: Role!
-  private(set) var module: Module? {
-    didSet {
-      self.didSetModule()
-    }
-  }
+  private(set) var module: Module?
+  
   weak var delegate: GameRequest?
   
-  public var roomId: Int!
-  private(set) var gameId: Int?
-  
-  let gameListView: UIView = UIView()
-  let gameListTableView: UITableView = UITableView()
-  
-  // init
   required init?(coder aDecoder: NSCoder) {
     super.init(coder: aDecoder)
   }
   
-  init(role: Role, roomId: Int) {
+  public required init(role: Role, roomId: Int) {
     super.init(frame: CGRect.zero)
     self.role = role
     self.roomId = roomId
-    self.initializeView()
   }
   
   private func initializeView() {
-    if self.role == GameView.Role.HOST {
+    if self.role == Game.Role.HOST {
       // init view
       self.addSubview(gameListView)
       self.gameListView.translatesAutoresizingMaskIntoConstraints = false
@@ -100,8 +92,6 @@ public class GameView: UIView, UITableViewDelegate, UITableViewDataSource {
       break
     case .SURVIVAL:
       break
-    case .JAM:
-      break
     }
   }
   
@@ -143,7 +133,7 @@ public class GameView: UIView, UITableViewDelegate, UITableViewDataSource {
       return UITableViewCell()
     }
     
-    cell.initialize(module: GameView.Module.init(rawValue: indexPath.row)!)
+    cell.initialize(module: Game.Module.init(rawValue: indexPath.row)!)
     return cell
   }
   

@@ -1,0 +1,11 @@
+framework module APIGameIOS {
+  umbrella header "APIGameIOS.h"
+
+  export *
+  module * { export * }
+}
+
+module APIGameIOS.Swift {
+    header "APIGameIOS-Swift.h"
+    requires objc
+}
