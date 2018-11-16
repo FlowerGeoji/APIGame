@@ -11,7 +11,6 @@ import org.json.JSONStringer;
 import java.util.ArrayList;
 
 import io.reactivex.subjects.BehaviorSubject;
-import lib.geoji.flower.apigameandroid.model.GameModule;
 import lib.geoji.flower.apigameandroid.model.Round;
 import lib.geoji.flower.apigameandroid.model.User;
 
@@ -23,14 +22,12 @@ public class GameState {
     final public BehaviorSubject<GameState> stateSubject = BehaviorSubject.<GameState>create();
 
     @Expose private int roomId;
-
-    @Expose private GameModule.GameType gameType;
     @Expose private String gameId;
 
     private User user;
     private Role role;
 
-    private ArrayList<Round> rounds;
+    final private ArrayList<Round> rounds;
     @Expose private Round currentRound;
     @Expose private int currentRoundIndex;
 
@@ -44,10 +41,6 @@ public class GameState {
 
     public int getRoomId() {
         return roomId;
-    }
-
-    public GameModule.GameType getGameType() {
-        return gameType;
     }
 
     public String getGameId() {
@@ -79,11 +72,6 @@ public class GameState {
         return this;
     }
 
-    public GameState setGameType(GameModule.GameType gameType) {
-        this.gameType = gameType;
-        return this;
-    }
-
     public GameState setGameId(String gameId) {
         this.gameId = gameId;
         return this;
@@ -99,8 +87,13 @@ public class GameState {
         return this;
     }
 
-    public GameState setRounds(ArrayList<Round> rounds) {
-        this.rounds = rounds;
+    public GameState addRound(Round round) {
+        this.rounds.add(round);
+        return this;
+    }
+
+    public GameState addRounds(ArrayList<Round> rounds) {
+        this.rounds.addAll(rounds);
         return this;
     }
 

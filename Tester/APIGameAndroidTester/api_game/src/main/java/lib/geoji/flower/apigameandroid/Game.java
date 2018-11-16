@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,14 +29,15 @@ import java.util.Map;
 import io.reactivex.CompletableObserver;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
-import lib.geoji.flower.apigameandroid.model.GameModule;
+import lib.geoji.flower.apigameandroid.model.GameInfo;
 import lib.geoji.flower.apigameandroid.model.Round;
 import lib.geoji.flower.apigameandroid.model.User;
 import lib.geoji.flower.apigameandroid.ox.OxInitController;
+import lib.geoji.flower.apigameandroid.scene.GameScene;
 
 public class Game extends LinearLayout {
     private View gameListView;
-    private Map<GameModule.GameType, GameModule> gameList = new HashMap<>();
+    private ArrayList<GameInfo> gameList = new ArrayList<>();
     private GameView currentView = null;
     private GameState state = new GameState();
     Disposable stateDisposable;
@@ -57,9 +59,18 @@ public class Game extends LinearLayout {
 
     private void init(Context context) {
         try {
-            gameList.put(GameModule.GameType.OX, new GameModule(GameModule.GameType.OX, OxInitController.class, "OX", "OX description", "", 0));
-            gameList.put(GameModule.GameType.CHOICE, new GameModule(GameModule.GameType.CHOICE, OxInitController.class, "Choice", "Choice description", "", 0));
-            gameList.put(GameModule.GameType.SURVIVAL, new GameModule(GameModule.GameType.SURVIVAL, OxInitController.class, "Survival", "Survival description", "", 0));
+            GameInfo oxGame = new GameInfo();
+            oxGame.setGameTitle("OX Game");
+            oxGame.addRound(new Round(Round.Type.OX, "question", "imageUrl", new String[]{"chioce1","choicd2"}, "solution", 10));
+            this.gameList.add(oxGame);
+
+            GameInfo normalGame = new GameInfo();
+            normalGame.setGameTitle("Normal Game");
+            normalGame.addRound(new Round(Round.Type.OX, "question", "imageUrl", new String[]{"chioce1","choicd2"}, "solution", 10));
+            normalGame.addRound(new Round(Round.Type.CHOICE, "question", "imageUrl", new String[]{"chioce1","choicd2"}, "solution", 10));
+            normalGame.addRound(new Round(Round.Type.CHOICE, "question", "imageUrl", new String[]{"chioce1","choicd2"}, "solution", 10));
+            this.gameList.add(normalGame);
+
             this.setBackgroundColor(Color.RED);
 
             this.stateDisposable = this.state.stateSubject.subscribe(
@@ -89,9 +100,8 @@ public class Game extends LinearLayout {
             RecyclerView gameListView = this.gameListView.findViewById(R.id.gameRecyclerView);
             GameListAdapter gameListAdapter = new GameListAdapter();
             gameListView.setAdapter(gameListAdapter);
-            gameListAdapter.addItem(gameList.get(GameModule.GameType.OX));
-            gameListAdapter.addItem(gameList.get(GameModule.GameType.CHOICE));
-            gameListAdapter.addItem(gameList.get(GameModule.GameType.SURVIVAL));
+            gameListAdapter.addItem(gameList.get(0));
+            gameListAdapter.addItem(gameList.get(1));
 
             addView(this.gameListView);
         }
@@ -102,21 +112,20 @@ public class Game extends LinearLayout {
                 .setRole(role);
     }
 
-    private void onClickGameModule(GameModule gameModule) {
+    private void onClickGameInfo(GameInfo gameInfo) {
         this.createGame(new SingleObserver<JsonObject>() {
             @Override
-            public void onSubscribe(Disposable d) {
-
-            }
+            public void onSubscribe(Disposable d) { }
 
             @Override
             public void onSuccess(JsonObject jsonObject) {
                 String gameId = jsonObject.get("gameId").getAsString();
 
-                Game.this.changeView(gameModule.getViewClass());
+                GameScene scene = new GameScene();
+                Game.this.changeView(GameScene.SceneName.INIT);
 
                 state.setGameId(gameId)
-                        .setGameType(gameModule.getGameType())
+                        .addRounds(gameInfo.getRounds())
                         .next();
             }
 
@@ -143,6 +152,7 @@ public class Game extends LinearLayout {
     }
 
     public void onRemoteMessage(String message) {
+        Log.d("@@@", message);
         if (state.getRole() != GameState.Role.GUEST) {
             return;
         }
@@ -150,20 +160,11 @@ public class Game extends LinearLayout {
         try {
             GameState hostState = new Gson().fromJson(message, GameState.class);
 
-            // Check game type
-            if (state.getGameType() != hostState.getGameType()) {
-                quitGame();
-            }
-
             if (currentView == null) {
-                GameModule.GameType gameType = hostState.getGameType();
-                if (gameType != null) {
-                    changeView(this.gameList.get(gameType).getViewClass());
-                }
+
             }
 
             state.setGameId(hostState.getGameId())
-                    .setGameType(hostState.getGameType())
                     .setCurrentRoundIndex(hostState.getCurrentRoundIndex())
                     .setCurrentRound(hostState.getCurrentRound())
                     .next();
@@ -201,6 +202,39 @@ public class Game extends LinearLayout {
         catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+    }
+
+    public void changeView(GameScene.SceneName sceneName) {
+        try {
+            GameScene scene = new GameScene();
+            GameView newView = scene.getControllerClass(GameScene.SceneName.INIT)
+                    .getConstructor(Context.class).newInstance(this.getContext());
+            newView.initialize(this);
+
+            if (currentView != null) {
+                this.removeView(currentView);
+            }
+
+            if (this.gameListView != null) {
+                this.gameListView.setVisibility(GONE);
+            }
+
+            this.addView(newView);
+            this.currentView = newView;
+        }
+        catch (InstantiationException e) {
+            e.printStackTrace();
+        }
+        catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public void quitGame() {
@@ -411,23 +445,23 @@ public class Game extends LinearLayout {
      * Recycler view
      ***********************************************************************************************************/
     private class GameListAdapter extends RecyclerView.Adapter<GameListAdapter.ViewHolder> {
-        private ArrayList<GameModule> games = new ArrayList<>();
+        private ArrayList<GameInfo> games = new ArrayList<>();
 
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.game_module_view, parent, false);
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.game_list_item_view, parent, false);
             return new ViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             try {
-                final GameModule game = this.games.get(position);
+                final GameInfo game = this.games.get(position);
                 holder.bind(game);
 
                 holder.getView().setOnClickListener(view -> {
-                    Game.this.onClickGameModule(game);
+                    Game.this.onClickGameInfo(game);
                 });
             }
             catch(IndexOutOfBoundsException e) {
@@ -441,33 +475,25 @@ public class Game extends LinearLayout {
             return this.games.size();
         }
 
-        void addItem(GameModule game) {
+        void addItem(GameInfo game) {
             this.games.add(game);
             this.notifyItemInserted(this.games.size()-1);
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
             private View view;
-            private GameModule gameModule;
-            private ImageView imageView;
-            private TextView nameTextView;
-            private TextView descriptionTextView;
+            private GameInfo gameInfo;
+            private TextView titleTextView;
 
             private ViewHolder(View itemView) {
                 super(itemView);
                 this.view = itemView;
-                this.imageView = itemView.findViewById(R.id.gameImageView);
-                this.nameTextView = itemView.findViewById(R.id.gameNameTextView);
-                this.descriptionTextView = itemView.findViewById(R.id.gameDescriptionTextView);
+                this.titleTextView = itemView.findViewById(R.id.gameTitleTextView);
             }
 
-            void bind(GameModule gameModule) {
-                this.gameModule = gameModule;
-//                Picasso.get()
-//                        .load(game.getThumbnail())
-//                        .into(this.imageView);
-                this.nameTextView.setText(gameModule.getDisplayName());
-                this.descriptionTextView.setText(gameModule.getDescription());
+            void bind(GameInfo gameInfo) {
+                this.gameInfo = gameInfo;
+                this.titleTextView.setText(gameInfo.getGameTitle());
             }
 
             public View getView() {

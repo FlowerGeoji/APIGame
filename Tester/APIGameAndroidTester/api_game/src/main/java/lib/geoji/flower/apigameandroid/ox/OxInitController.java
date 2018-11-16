@@ -49,7 +49,6 @@ public class OxInitController extends GameView {
     }
 
     public void onClickCancelButton(View view) {
-//        Log.d("@@@", this.question);
 //        game.quitGame();
     }
 

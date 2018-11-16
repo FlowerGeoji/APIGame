@@ -2,6 +2,7 @@ package lib.geoji.flower.apigameandroid.ox;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -45,7 +46,7 @@ public class OxMainController extends GameView {
 
     @Override
     protected void onChangedGameState(GameState gameState) {
-
+        Log.d("@@@", gameState.toJsonString());
     }
 
     public void onClickOButton(View view) {

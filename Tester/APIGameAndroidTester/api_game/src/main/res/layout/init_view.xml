@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+        <variable name="controller" type="lib.geoji.flower.apigameandroid.scene.InitController"/>
+    </data>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/purple">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:paddingBottom="100dp"
+            android:textSize="60sp"
+            android:textColor="@color/white"
+            android:textAlignment="center"
+            android:text="@string/placeholder"/>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:padding="20dp"
+            android:weightSum="10">
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:textStyle="bold"
+                android:text="@string/cancel"
+                android:onClick="@{controller::onClickCancelButton}"/>
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="7"
+                android:textStyle="bold"
+                android:text="@string/start_game"
+                android:onClick="@{controller::onClickStartGameButton}"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+</layout>

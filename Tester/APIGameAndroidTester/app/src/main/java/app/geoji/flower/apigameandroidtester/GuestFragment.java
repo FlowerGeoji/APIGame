@@ -31,7 +31,6 @@ public class GuestFragment extends BaseFragment {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         message -> {
-                            Log.d("@@@Message", message);
                             game.onRemoteMessage(message);
                         });
 
