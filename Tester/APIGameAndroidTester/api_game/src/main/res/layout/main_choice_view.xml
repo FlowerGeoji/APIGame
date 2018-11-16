@@ -5,9 +5,9 @@
         <variable name="controller" type="lib.geoji.flower.apigameandroid.scene.MainController"/>
     </data>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:orientation="vertical" android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    </RelativeLayout>
+    </LinearLayout>
 </layout>

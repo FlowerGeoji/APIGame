@@ -46,6 +46,6 @@ public class InitController extends GameView {
     }
 
     public void onClickCancelButton(View view) {
-
+        game.quitGame();
     }
 }
