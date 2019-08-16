@@ -12,7 +12,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -22,17 +21,15 @@ import com.google.gson.JsonParseException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 import io.reactivex.CompletableObserver;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.observables.ConnectableObservable;
 import lib.geoji.flower.apigameandroid.model.GameInfo;
 import lib.geoji.flower.apigameandroid.model.Round;
 import lib.geoji.flower.apigameandroid.model.User;
-import lib.geoji.flower.apigameandroid.ox.OxInitController;
 import lib.geoji.flower.apigameandroid.scene.GameScene;
 
 public class Game extends LinearLayout {
@@ -61,14 +58,18 @@ public class Game extends LinearLayout {
         try {
             GameInfo oxGame = new GameInfo();
             oxGame.setGameTitle("OX Game");
-            oxGame.addRound(new Round(Round.Type.OX, "question", "imageUrl", new String[]{"chioce1","choicd2"}, "solution", 10));
+            Round oxRound1 = new Round(); oxRound1.initOX("김밥왕자는 잘생겼다.", true, null, 10);
+            oxGame.addRound(oxRound1);
             this.gameList.add(oxGame);
 
             GameInfo normalGame = new GameInfo();
             normalGame.setGameTitle("Normal Game");
-            normalGame.addRound(new Round(Round.Type.OX, "question", "imageUrl", new String[]{"chioce1","choicd2"}, "solution", 10));
-            normalGame.addRound(new Round(Round.Type.CHOICE, "question", "imageUrl", new String[]{"chioce1","choicd2"}, "solution", 10));
-            normalGame.addRound(new Round(Round.Type.CHOICE, "question", "imageUrl", new String[]{"chioce1","choicd2"}, "solution", 10));
+            Round choiceRound1 = new Round(); choiceRound1.initOX("콜라는 빨대로 먹어야 더 맛있다?", false, null, 10);
+            Round choiceRound2 = new Round(); choiceRound2.initChoice("가장 맛있는 콜라는 무엇인가", new String[]{"캔콜라", "페트콜", "맥도날드콜라"}, "2", null, 10);
+            Round choiceRound3 = new Round(); choiceRound3.initChoice("김밥왕자의 고향은 어디인가", new String[]{"진주", "김밥왕국"}, "1", null, 10);
+            normalGame.addRound(choiceRound1);
+            normalGame.addRound(choiceRound2);
+            normalGame.addRound(choiceRound3);
             this.gameList.add(normalGame);
 
             this.setBackgroundColor(Color.RED);
@@ -113,27 +114,8 @@ public class Game extends LinearLayout {
     }
 
     private void onClickGameInfo(GameInfo gameInfo) {
-        this.createGame(new SingleObserver<JsonObject>() {
-            @Override
-            public void onSubscribe(Disposable d) { }
-
-            @Override
-            public void onSuccess(JsonObject jsonObject) {
-                String gameId = jsonObject.get("gameId").getAsString();
-
-                GameScene scene = new GameScene();
-                Game.this.changeView(GameScene.SceneName.INIT);
-
-                state.setGameId(gameId)
-                        .addRounds(gameInfo.getRounds())
-                        .next();
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                e.printStackTrace();
-            }
-        });
+        state.addRounds(gameInfo.getRounds());
+        changeView(GameScene.SceneName.INIT);
     }
 
     /**************************************************************************************************************************************************
@@ -160,54 +142,97 @@ public class Game extends LinearLayout {
         try {
             GameState hostState = new Gson().fromJson(message, GameState.class);
 
-            if (currentView == null) {
-
+            if (state.getSceneName()==null) {
+                changeView(hostState.getSceneName());
+                state.setSceneName(hostState.getSceneName());
+            }
+            else if (!state.getSceneName().equals(hostState.getSceneName())) {
+                changeView(hostState.getSceneName());
+                state.setSceneName(hostState.getSceneName());
             }
 
             state.setGameId(hostState.getGameId())
-                    .setCurrentRoundIndex(hostState.getCurrentRoundIndex())
                     .setCurrentRound(hostState.getCurrentRound())
+                    .setCurrentRoundIndex(hostState.getCurrentRoundIndex())
                     .next();
         }
         catch (JsonParseException e) {
             e.printStackTrace();
         }
     }
+    /**************************************************************************************************************************************************
+     * About Game
+     **************************************************************************************************************************************************/
 
-    public void changeView(Class<? extends GameView> viewClass) {
-        try {
-            GameView newView = viewClass.getConstructor(Context.class).newInstance(this.getContext());
-            newView.initialize(this);
+    public void createGame(CompletableObserver observer) {
+        Throwable error = checkApiUsable(true, true, false);
+        if (error != null) {
+            observer.onError(error);
+            return;
+        }
 
-            if (currentView != null) {
-                this.removeView(currentView);
+        String method = "post";
+        String url = String.format(Locale.ROOT, "/game/%d", state.getRoomId());
+        JsonObject data = new JsonObject();
+        data.addProperty("name", "name");
+        data.addProperty("displayName", "displayName");
+        data.addProperty("version", "version");
+        data.addProperty("appModuleVersion", "appModuleVersion");
+
+        this.onRequestApiListener.requestApi(method, url, data, new SingleObserver<JsonObject>() {
+            @Override
+            public void onSubscribe(Disposable d) { }
+
+            @Override
+            public void onSuccess(JsonObject jsonObject) {
+                String gameId = jsonObject.get("gameId").getAsString();
+                state.setGameId(gameId).next();
+                observer.onComplete();
             }
 
-            if (this.gameListView != null) {
-                this.gameListView.setVisibility(GONE);
+            @Override
+            public void onError(Throwable e) {
+                observer.onError(e);
             }
+        });
+    }
 
-            this.addView(newView);
-            this.currentView = newView;
+    public void quitGame() {
+        if (currentView != null) {
+            this.removeView(currentView);
         }
-        catch (InstantiationException e) {
-            e.printStackTrace();
+        currentView = null;
+    }
+
+    public void goNextMain() {
+        Round prevRound = state.getCurrentRound();
+        int prevRoundIndex = state.getCurrentRoundIndex();
+
+        if (prevRound == null) {
+            state.setCurrentRound(0);
         }
-        catch (IllegalAccessException e) {
-            e.printStackTrace();
+        else {
+            state.setCurrentRound(prevRoundIndex+1);
         }
-        catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-        catch (InvocationTargetException e) {
-            e.printStackTrace();
+
+        Round currentRound = state.getCurrentRound();
+        switch (currentRound.getType()) {
+            case OX:
+                changeView(GameScene.SceneName.MAIN_OX);
+                return;
+            case CHOICE:
+                changeView(GameScene.SceneName.MAIN_CHOICE);
+                return;
+            case SUBJECTIVE:
+                changeView(GameScene.SceneName.MAIN_SUBJ);
+                return;
         }
     }
 
-    public void changeView(GameScene.SceneName sceneName) {
+    private void changeView(GameScene.SceneName sceneName) {
         try {
             GameScene scene = new GameScene();
-            GameView newView = scene.getControllerClass(GameScene.SceneName.INIT)
+            GameView newView = scene.getControllerClass(sceneName)
                     .getConstructor(Context.class).newInstance(this.getContext());
             newView.initialize(this);
 
@@ -221,6 +246,8 @@ public class Game extends LinearLayout {
 
             this.addView(newView);
             this.currentView = newView;
+
+            this.state.setSceneName(sceneName).next();
         }
         catch (InstantiationException e) {
             e.printStackTrace();
@@ -237,32 +264,47 @@ public class Game extends LinearLayout {
 
     }
 
-    public void quitGame() {
-        if (currentView != null) {
-            this.removeView(currentView);
-        }
-        currentView = null;
-    }
+    /**************************************************************************************************************************************************
+     * About answer
+     **************************************************************************************************************************************************/
 
-    public void addRound(Round round) {
-        state.getRounds().add(round);
-        state.next();
-    }
+    public void updateAnswer(String answer, int round, @Nullable SingleObserver<JsonObject> observer) {
+        switch (state.getRole()) {
+            case HOST:
+                state.updateAnswer(answer, round).next();
+                break;
+            case GUEST:
+                Throwable error = checkApiUsable(false, true, true);
+                if (error != null) {
+                    if (observer != null) {
+                        observer.onError(error);
+                    }
+                    return;
+                }
 
-    public void setCurrentRound(int index) {
-        Round currentRound = null;
-        try {
-            currentRound = state.getRounds().get(index);
-        }
-        catch (IndexOutOfBoundsException e) {
-            e.printStackTrace();
-        }
+                String method = "post";
+                String url = String.format(Locale.ROOT, "/game/%d/%s/answers", state.getRoomId(), state.getGameId());
+                JsonObject data = new JsonObject();
+                data.addProperty("answer", answer);
+                data.addProperty("round", round);
 
+                this.onRequestApiListener.requestApi(method, url, data, new SingleObserver<JsonObject>() {
+                    @Override
+                    public void onSubscribe(Disposable d) { }
 
-        if (currentRound != null) {
-            state.setCurrentRoundIndex(index)
-                    .setCurrentRound(currentRound)
-                    .next();
+                    @Override
+                    public void onSuccess(JsonObject jsonObject) {
+                        Log.d("@@@answer", jsonObject.toString());
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+                });
+                break;
+            default:
+                break;
         }
     }
 
@@ -277,19 +319,23 @@ public class Game extends LinearLayout {
         this.onRequestApiListener = onRequestApiListener;
     }
 
-    private Throwable checkHostApi(boolean checkRoomId, boolean checkGameId) {
-        if (state.getRole() != GameState.Role.HOST) {
-            return new Throwable("You must be a HOST");
-        }
-
+    private Throwable checkApiUsable(boolean checkHost, boolean checkRoomId, boolean checkGameId) {
+        // check listener
         if (this.onRequestApiListener == null) {
             return new Throwable("There is no RequestApi listener");
         }
 
+        // check role
+        if (checkHost && state.getRole() != GameState.Role.HOST) {
+            return new Throwable("You must be a HOST");
+        }
+
+        // check roomId
         if (checkRoomId && state.getRoomId() < 0) {
             return new Throwable("This api need roomId");
         }
 
+        // check gameId
         if (checkGameId && (state.getGameId() == null || state.getGameId().equals(""))) {
             return new Throwable("This api need gameId");
         }
@@ -340,26 +386,10 @@ public class Game extends LinearLayout {
         });
     }
 
-    public void createGame(SingleObserver<JsonObject> observer) {
-        Throwable error = checkHostApi(true, false);
-        if (error != null) {
-            observer.onError(error);
-            return;
-        }
 
-        String method = "post";
-        String url = String.format(Locale.ROOT, "/game/%d", state.getRoomId());
-        JsonObject data = new JsonObject();
-        data.addProperty("name", "name");
-        data.addProperty("displayName", "displayName");
-        data.addProperty("version", "version");
-        data.addProperty("appModuleVersion", "appModuleVersion");
-
-        this.onRequestApiListener.requestApi(method, url, data, observer);
-    }
 
     public void updateReward(int reward, int userHeart, int finalRound, @Nullable SingleObserver<JsonObject> observer) {
-        Throwable error = checkHostApi(true, true);
+        Throwable error = checkApiUsable(true, true, true);
         if (error != null) {
             if (observer != null) {
                 observer.onError(error);
@@ -379,7 +409,7 @@ public class Game extends LinearLayout {
 
     public void updateSolution(String solution, @IntRange(from = 0) int round, boolean marking, @Nullable SingleObserver<JsonObject> observer) {
         try {
-            Throwable error = checkHostApi(true, true);
+            Throwable error = checkApiUsable(true, true, true);
             if (error != null) {
                 if (observer != null) {
                     observer.onError(error);
@@ -389,7 +419,7 @@ public class Game extends LinearLayout {
 
             if (round < 0) {
                 if (observer != null) {
-                    observer.onError(new Throwable(""));
+                    observer.onError(new Throwable("Round number"));
                 }
                 return;
             }
@@ -410,23 +440,7 @@ public class Game extends LinearLayout {
         }
     }
 
-    public void updateAnswer(String answer, int round, @Nullable SingleObserver<JsonObject> observer) {
-        Throwable error = checkHostApi(true, true);
-        if (error != null) {
-            if (observer != null) {
-                observer.onError(error);
-            }
-            return;
-        }
 
-        String method = "post";
-        String url = String.format(Locale.ROOT, "/game/%d/%s/answers", state.getRoomId(), state.getGameId());
-        JsonObject data = new JsonObject();
-        data.addProperty("answer", answer);
-        data.addProperty("round", round);
-
-        this.onRequestApiListener.requestApi(method, url, data, observer);
-    }
 
     public void getAnswersCount(@Nullable SingleObserver<JsonObject> observer) {
 

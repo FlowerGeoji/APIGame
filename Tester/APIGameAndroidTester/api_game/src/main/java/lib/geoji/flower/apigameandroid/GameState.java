@@ -1,5 +1,7 @@
 package lib.geoji.flower.apigameandroid;
 
+import android.util.SparseArray;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -9,10 +11,13 @@ import org.json.JSONObject;
 import org.json.JSONStringer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import io.reactivex.subjects.BehaviorSubject;
 import lib.geoji.flower.apigameandroid.model.Round;
 import lib.geoji.flower.apigameandroid.model.User;
+import lib.geoji.flower.apigameandroid.scene.GameScene;
 
 public class GameState {
     public enum Role {
@@ -21,23 +26,18 @@ public class GameState {
 
     final public BehaviorSubject<GameState> stateSubject = BehaviorSubject.<GameState>create();
 
-    @Expose private int roomId;
+    @Expose private int roomId = -1;
     @Expose private String gameId;
 
     private User user;
     private Role role;
 
-    final private ArrayList<Round> rounds;
+    @Expose private GameScene.SceneName sceneName;
+
+    final private ArrayList<Round> rounds = new ArrayList<>();
+    final private SparseArray<String> answers = new SparseArray<>();
     @Expose private Round currentRound;
-    @Expose private int currentRoundIndex;
-
-    GameState() {
-        this.roomId = -1;
-        this.gameId = null;
-
-        this.rounds = new ArrayList<>();
-        this.currentRoundIndex = -1;
-    }
+    @Expose private int currentRoundIndex = -1;
 
     public int getRoomId() {
         return roomId;
@@ -55,8 +55,16 @@ public class GameState {
         return role;
     }
 
+    public GameScene.SceneName getSceneName() {
+        return sceneName;
+    }
+
     public ArrayList<Round> getRounds() {
         return rounds;
+    }
+
+    public SparseArray<String> getAnswers() {
+        return answers;
     }
 
     public int getCurrentRoundIndex() {
@@ -87,6 +95,11 @@ public class GameState {
         return this;
     }
 
+    public GameState setSceneName(GameScene.SceneName sceneName) {
+        this.sceneName = sceneName;
+        return this;
+    }
+
     public GameState addRound(Round round) {
         this.rounds.add(round);
         return this;
@@ -97,13 +110,34 @@ public class GameState {
         return this;
     }
 
-    public GameState setCurrentRoundIndex(int currentRoundIndex) {
-        this.currentRoundIndex = currentRoundIndex;
+    public GameState updateAnswer(String answer, int round) {
+        this.answers.put(round, answer);
         return this;
     }
 
     public GameState setCurrentRound(Round currentRound) {
         this.currentRound = currentRound;
+        return this;
+    }
+
+    public GameState setCurrentRound(int currentRoundIndex) {
+        if (currentRoundIndex >= rounds.size()) {
+            return this;
+        }
+
+        try {
+            this.currentRoundIndex = currentRoundIndex;
+            this.currentRound = this.rounds.get(currentRoundIndex);
+        }
+        catch (IndexOutOfBoundsException e) {
+            e.printStackTrace();
+        }
+
+        return this;
+    }
+
+    public GameState setCurrentRoundIndex(int currentRoundIndex) {
+        this.currentRoundIndex = currentRoundIndex;
         return this;
     }
 

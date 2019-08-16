@@ -8,7 +8,9 @@ import lib.geoji.flower.apigameandroid.GameView;
 public class GameScene {
     public enum SceneName {
         INIT,
-        MAIN,
+        MAIN_OX,
+        MAIN_CHOICE,
+        MAIN_SUBJ,
         RESULT
     }
 
@@ -17,8 +19,12 @@ public class GameScene {
         switch (sceneName) {
             case INIT:
                 return InitController.class;
-            case MAIN:
-                return MainController.class;
+            case MAIN_OX:
+                return MainOxController.class;
+            case MAIN_CHOICE:
+                return MainChoiceController.class;
+            case MAIN_SUBJ:
+                return MainChoiceController.class;
             case RESULT:
                 return ResultController.class;
             default:
